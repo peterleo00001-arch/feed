@@ -98,13 +98,35 @@ Requirements:
 - Provide 4 meals: breakfast, lunch, snack, dinner.
 - For each meal, provide a dish name and a list of main ingredients.
 - The response MUST be a valid JSON object matching the requested schema.
+- Each meal MUST include "mealType" and it MUST be one of: "breakfast", "lunch", "snack", "dinner".
 - ${langInstruction}
   `;
 
   try {
     const text = await callQwenChat(prompt);
     const data = extractJson(text) || {};
-    return data.meals || [];
+    const meals = Array.isArray(data.meals) ? data.meals : [];
+    const defaultTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
+    return meals.map((meal: any, index: number) => {
+      const rawType = typeof meal?.mealType === 'string' ? meal.mealType : '';
+      const lowered = rawType.toLowerCase();
+      const normalized =
+        ['breakfast', '早餐', '早饭', '早飯'].includes(rawType) || lowered === 'breakfast'
+          ? 'breakfast'
+          : ['lunch', '午餐', '午饭', '午飯'].includes(rawType) || lowered === 'lunch'
+          ? 'lunch'
+          : ['snack', '加餐', '点心', '點心'].includes(rawType) || lowered === 'snack'
+          ? 'snack'
+          : ['dinner', '晚餐', '晚饭', '晚飯'].includes(rawType) || lowered === 'dinner'
+          ? 'dinner'
+          : defaultTypes[index] || 'breakfast';
+      return {
+        ...meal,
+        mealType: normalized,
+        dishName: typeof meal?.dishName === 'string' ? meal.dishName : '',
+        ingredients: Array.isArray(meal?.ingredients) ? meal.ingredients : []
+      };
+    });
   } catch (e) {
     console.error("Failed to generate meal plan", e);
     return [];
@@ -141,6 +163,7 @@ Requirements:
 - Meals must be healthy, low in sodium and sugar, soft enough for a ${ageStr} toddler, and nutritionally balanced.
 - Provide a dish name and a list of main ingredients.
 - The response MUST be a valid JSON object matching the requested schema.
+- The response MUST include "mealType" and it MUST equal "${mealType}".
 - ${langInstruction}
   `;
 

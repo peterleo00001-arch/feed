@@ -41,9 +41,9 @@ export default function Home() {
 
         // Add new meals
         await db.mealHistory.bulkAdd(
-          newMeals.map((m: any) => ({
+          newMeals.map((m: any, index: number) => ({
             date: today,
-            mealType: typeof m?.mealType === 'string' ? m.mealType : 'meal',
+            mealType: typeof m?.mealType === 'string' ? m.mealType : (['breakfast','lunch','snack','dinner'][index] || 'meal'),
             dishName: typeof m?.dishName === 'string' ? m.dishName : 'Meal',
             status: 'pending',
             ingredients: Array.isArray(m?.ingredients) ? m.ingredients : []
