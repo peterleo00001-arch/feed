@@ -1,8 +1,52 @@
-import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../db";
 
-function getAI() {
-  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY;
+const DASHSCOPE_BASE_URL =
+  process.env.DASHSCOPE_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1";
+const DASHSCOPE_TTS_URL =
+  process.env.DASHSCOPE_TTS_URL ||
+  "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
+const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-plus";
+const QWEN_TTS_MODEL = "qwen3-tts-flash";
+
+function getApiKey() {
+  if (!DASHSCOPE_API_KEY) {
+    throw new Error("Missing DASHSCOPE_API_KEY. Please set it in your environment.");
+  }
+  return DASHSCOPE_API_KEY;
+}
+
+async function callQwenChat(prompt: string) {
+  const response = await fetch(`${DASHSCOPE_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getApiKey()}`,
+    },
+    body: JSON.stringify({
+      model: QWEN_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`DashScope chat error ${response.status}: ${text}`);
+  }
+
+  const data = await response.json();
+  return (data?.choices?.[0]?.message?.content || "") as string;
+}
+
+function extractJson(text: string) {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[0]);
+  } catch {
+    return null;
+  }
 }
 
 export function getBabyProfile() {
@@ -57,37 +101,12 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          meals: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                mealType: { type: Type.STRING, description: "breakfast, lunch, snack, or dinner" },
-                dishName: { type: Type.STRING },
-                ingredients: { type: Type.ARRAY, items: { type: Type.STRING } }
-              },
-              required: ["mealType", "dishName", "ingredients"]
-            }
-          }
-        },
-        required: ["meals"]
-      }
-    }
-  });
-
   try {
-    const data = JSON.parse(response.text || '{}');
+    const text = await callQwenChat(prompt);
+    const data = extractJson(text) || {};
     return data.meals || [];
   } catch (e) {
-    console.error("Failed to parse meal plan JSON", e);
+    console.error("Failed to generate meal plan", e);
     return [];
   }
 }
@@ -125,48 +144,40 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          mealType: { type: Type.STRING },
-          dishName: { type: Type.STRING },
-          ingredients: { type: Type.ARRAY, items: { type: Type.STRING } }
-        },
-        required: ["mealType", "dishName", "ingredients"]
-      }
-    }
-  });
-
   try {
-    return JSON.parse(response.text || '{}');
+    const text = await callQwenChat(prompt);
+    return extractJson(text);
   } catch (e) {
-    console.error("Failed to parse single meal JSON", e);
+    console.error("Failed to generate single meal", e);
     return null;
   }
 }
 
 export async function generateAudio(text: string, language: 'zh' | 'en') {
   try {
-    const voiceName = language === 'zh' ? 'Aoede' : 'Kore';
-    const response = await getAI().models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text }] }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName },
-          },
-        },
+    const response = await fetch(DASHSCOPE_TTS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getApiKey()}`,
       },
+      body: JSON.stringify({
+        model: QWEN_TTS_MODEL,
+        input: {
+          text,
+          voice: "Cherry",
+          language_type: language === "zh" ? "Chinese" : "English",
+        },
+      }),
     });
 
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`DashScope TTS error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    return data?.output?.audio?.url || null;
   } catch (e) {
     console.error("Failed to generate audio", e);
     return null;
@@ -191,12 +202,12 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt
-  });
-
-  return response.text || '';
+  try {
+    return await callQwenChat(prompt);
+  } catch (e) {
+    console.error("Failed to generate tutorial", e);
+    return '';
+  }
 }
 
 export async function generateReport(timeframe: 'daily' | 'weekly', history: any[], language: 'zh' | 'en') {
@@ -215,10 +226,10 @@ Format as Markdown.
 - ${langInstruction}
   `;
 
-  const response = await getAI().models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt
-  });
-
-  return response.text || '';
+  try {
+    return await callQwenChat(prompt);
+  } catch (e) {
+    console.error("Failed to generate report", e);
+    return '';
+  }
 }

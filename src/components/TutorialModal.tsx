@@ -42,9 +42,10 @@ export default function TutorialModal({ isOpen, onClose, title, content, isLoadi
 
     setIsAudioLoading(true);
     try {
-      const base64 = await generateAudio(content, language);
-      if (base64) {
-        const audio = new Audio(`data:audio/wav;base64,${base64}`);
+      const audioData = await generateAudio(content, language);
+      if (audioData) {
+        const src = audioData.startsWith('http') ? audioData : `data:audio/wav;base64,${audioData}`;
+        const audio = new Audio(src);
         audio.onended = () => setIsPlaying(false);
         audioRef.current = audio;
         audio.play();
