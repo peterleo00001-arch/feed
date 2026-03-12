@@ -1,7 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../db";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+function getAI() {
+  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+}
 
 export function getBabyProfile() {
   try {
@@ -55,7 +57,7 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
     config: {
@@ -123,7 +125,7 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
     config: {
@@ -151,7 +153,7 @@ Requirements:
 export async function generateAudio(text: string, language: 'zh' | 'en') {
   try {
     const voiceName = language === 'zh' ? 'Aoede' : 'Kore';
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text }] }],
       config: {
@@ -189,7 +191,7 @@ Requirements:
 - ${langInstruction}
   `;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt
   });
@@ -213,7 +215,7 @@ Format as Markdown.
 - ${langInstruction}
   `;
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt
   });
