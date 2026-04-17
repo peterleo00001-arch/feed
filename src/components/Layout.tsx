@@ -21,31 +21,24 @@ export default function Layout() {
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 pb-28">
+      <main className="flex-1 overflow-y-auto p-4 pb-24">
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-3 left-3 right-3 bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_14px_40px_rgba(0,0,0,0.12)] rounded-[28px] flex justify-around items-center h-[72px] pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-black/5 flex justify-around items-center h-[84px] pb-safe">
         <NavLink
           to="/"
           className={({ isActive }) =>
             clsx(
-              "flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-all",
-              isActive ? "text-[#007AFF]" : "text-gray-500 hover:text-gray-700"
+              "flex flex-col items-center justify-center w-full h-full space-y-1 text-[10px] font-medium transition-colors active:scale-95",
+              isActive ? "text-[#007AFF]" : "text-gray-400 hover:text-gray-600"
             )
           }
         >
           {({ isActive }) => (
             <>
-              <span
-                className={clsx(
-                  "flex items-center justify-center w-11 h-11 rounded-full transition-all",
-                  isActive ? "bg-white/90 shadow-[0_6px_18px_rgba(0,0,0,0.12)]" : "bg-white/40"
-                )}
-              >
-                <Home size={22} strokeWidth={isActive ? 2.6 : 2} />
-              </span>
-              <span className="mt-1">{t('navToday')}</span>
+              <Home size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <span>{t('navToday')}</span>
             </>
           )}
         </NavLink>
@@ -53,22 +46,15 @@ export default function Layout() {
           to="/preferences"
           className={({ isActive }) =>
             clsx(
-              "flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-all",
-              isActive ? "text-[#007AFF]" : "text-gray-500 hover:text-gray-700"
+              "flex flex-col items-center justify-center w-full h-full space-y-1 text-[10px] font-medium transition-colors active:scale-95",
+              isActive ? "text-[#007AFF]" : "text-gray-400 hover:text-gray-600"
             )
           }
         >
           {({ isActive }) => (
             <>
-              <span
-                className={clsx(
-                  "flex items-center justify-center w-11 h-11 rounded-full transition-all",
-                  isActive ? "bg-white/90 shadow-[0_6px_18px_rgba(0,0,0,0.12)]" : "bg-white/40"
-                )}
-              >
-                <Heart size={22} strokeWidth={isActive ? 2.6 : 2} />
-              </span>
-              <span className="mt-1">{t('navPreferences')}</span>
+              <Heart size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <span>{t('navPreferences')}</span>
             </>
           )}
         </NavLink>
@@ -76,22 +62,15 @@ export default function Layout() {
           to="/reports"
           className={({ isActive }) =>
             clsx(
-              "flex flex-col items-center justify-center w-full h-full text-[10px] font-medium transition-all",
-              isActive ? "text-[#007AFF]" : "text-gray-500 hover:text-gray-700"
+              "flex flex-col items-center justify-center w-full h-full space-y-1 text-[10px] font-medium transition-colors active:scale-95",
+              isActive ? "text-[#007AFF]" : "text-gray-400 hover:text-gray-600"
             )
           }
         >
           {({ isActive }) => (
             <>
-              <span
-                className={clsx(
-                  "flex items-center justify-center w-11 h-11 rounded-full transition-all",
-                  isActive ? "bg-white/90 shadow-[0_6px_18px_rgba(0,0,0,0.12)]" : "bg-white/40"
-                )}
-              >
-                <BarChart2 size={22} strokeWidth={isActive ? 2.6 : 2} />
-              </span>
-              <span className="mt-1">{t('navReports')}</span>
+              <BarChart2 size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <span>{t('navReports')}</span>
             </>
           )}
         </NavLink>

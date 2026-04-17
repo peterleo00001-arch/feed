@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Language = 'zh' | 'en';
 
@@ -14,13 +14,13 @@ export const translations: Translations = {
   navToday: { zh: '今日', en: 'Today' },
   navPreferences: { zh: '偏好', en: 'Preferences' },
   navReports: { zh: '报告', en: 'Reports' },
-
+  
   // Home
   todaysPlan: { zh: '今日餐单', en: "Today's Plan" },
   generatePlan: { zh: '生成餐单', en: 'Generate Plan' },
   regenerate: { zh: '重新生成', en: 'Regenerate' },
   noMealsTitle: { zh: '暂无餐单', en: 'No meals planned yet' },
-  noMealsDesc: { zh: '生成一份专为您的宝宝定制的健康 AI 餐单。', en: "Generate a healthy, AI-curated meal plan tailored to your toddler's preferences." },
+  noMealsDesc: { zh: '生成一份专为您的宝宝定制的健康AI餐单。', en: "Generate a healthy, AI-curated meal plan tailored to your toddler's preferences." },
   createPlanBtn: { zh: '创建今日餐单', en: "Create Today's Plan" },
   recipe: { zh: '食谱', en: 'Recipe' },
   eaten: { zh: '已吃', en: 'Eaten' },
@@ -28,7 +28,7 @@ export const translations: Translations = {
   pending: { zh: '待定', en: 'Pending' },
   failedGenerate: { zh: '生成餐单失败，请重试。', en: 'Failed to generate a meal plan. Please try again.' },
   errorGenerate: { zh: '生成餐单时发生错误。', en: 'An error occurred while generating the plan.' },
-
+  
   // Preferences
   prefTitle: { zh: '饮食偏好', en: 'Preferences' },
   prefDesc: { zh: '帮助我们定制最完美的餐食。', en: 'Help us tailor the perfect meals.' },
@@ -36,8 +36,8 @@ export const translations: Translations = {
   dislikes: { zh: '不喜欢', en: 'Dislikes' },
   allergies: { zh: '过敏', en: 'Allergies' },
   addPlaceholder: { zh: '添加', en: 'Add a' },
-  noItemsAdded: { zh: '暂无添加', en: 'No items added yet.' },
-
+  noItemsAdded: { zh: '暂未添加', en: 'No items added yet.' },
+  
   // Reports
   repTitle: { zh: '洞察与报告', en: 'Insights & Reports' },
   repDesc: { zh: '追踪长期的饮食习惯。', en: 'Track eating habits over time.' },
@@ -50,19 +50,19 @@ export const translations: Translations = {
   generate: { zh: '生成', en: 'Generate' },
   analyzing: { zh: '正在分析饮食习惯...', en: 'Analyzing eating habits...' },
   clickGenerate: { zh: '点击生成以获取基于近期餐食的个性化洞察。', en: 'Click generate to get personalized insights based on recent meals.' },
-  notEnoughHistory: { zh: '没有足够的就餐记录来生成报告。', en: 'Not enough meal history to generate a report.' },
+  notEnoughHistory: { zh: '没有足够的就餐历史来生成报告。', en: 'Not enough meal history to generate a report.' },
   failedReport: { zh: '生成报告失败，请重试。', en: 'Failed to generate report. Please try again.' },
-
+  
   // Tutorial Modal
   generatingRecipe: { zh: '正在生成健康食谱...', en: 'Generating healthy recipe...' },
   failedTutorial: { zh: '加载教程失败，请重试。', en: 'Failed to load tutorial. Please try again.' },
   playAudio: { zh: '朗读食谱', en: 'Listen' },
   stopAudio: { zh: '停止朗读', en: 'Stop' },
   loadingAudio: { zh: '加载语音...', en: 'Loading audio...' },
-
+  
   // Settings
   settingsTitle: { zh: '设置', en: 'Settings' },
-  settingsDesc: { zh: '管理宝宝资料和应用偏好。', en: 'Manage baby profile and app preferences.' },
+  settingsDesc: { zh: '管理宝宝的资料和应用偏好。', en: 'Manage baby profile and app preferences.' },
   babyProfile: { zh: '宝宝资料', en: 'Baby Profile' },
   age: { zh: '年龄', en: 'Age' },
   months: { zh: '个月', en: 'months' },
@@ -78,7 +78,7 @@ export const translations: Translations = {
   historyCleared: { zh: '饮食记录已清除', en: 'Meal history cleared' },
   save: { zh: '保存设置', en: 'Save Settings' },
   saved: { zh: '已保存', en: 'Saved' },
-
+  
   // Meal Types
   breakfast: { zh: '早餐', en: 'Breakfast' },
   lunch: { zh: '午餐', en: 'Lunch' },

@@ -1,52 +1,8 @@
+import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "../db";
 
-const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY;
-const DASHSCOPE_BASE_URL =
-  process.env.DASHSCOPE_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1";
-const DASHSCOPE_TTS_URL =
-  process.env.DASHSCOPE_TTS_URL ||
-  "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation";
-const QWEN_MODEL = process.env.QWEN_MODEL || "qwen-plus";
-const QWEN_TTS_MODEL = "qwen3-tts-flash";
-
-function getApiKey() {
-  if (!DASHSCOPE_API_KEY) {
-    throw new Error("Missing DASHSCOPE_API_KEY. Please set it in your environment.");
-  }
-  return DASHSCOPE_API_KEY;
-}
-
-async function callQwenChat(prompt: string) {
-  const response = await fetch(`${DASHSCOPE_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify({
-      model: QWEN_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`DashScope chat error ${response.status}: ${text}`);
-  }
-
-  const data = await response.json();
-  return (data?.choices?.[0]?.message?.content || "") as string;
-}
-
-function extractJson(text: string) {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try {
-    return JSON.parse(match[0]);
-  } catch {
-    return null;
-  }
+function getAI() {
+  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 }
 
 export function getBabyProfile() {
@@ -98,37 +54,40 @@ Requirements:
 - Provide 4 meals: breakfast, lunch, snack, dinner.
 - For each meal, provide a dish name and a list of main ingredients.
 - The response MUST be a valid JSON object matching the requested schema.
-- Each meal MUST include "mealType" and it MUST be one of: "breakfast", "lunch", "snack", "dinner".
 - ${langInstruction}
   `;
 
+  const response = await getAI().models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          meals: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                mealType: { type: Type.STRING, description: "breakfast, lunch, snack, or dinner" },
+                dishName: { type: Type.STRING },
+                ingredients: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["mealType", "dishName", "ingredients"]
+            }
+          }
+        },
+        required: ["meals"]
+      }
+    }
+  });
+
   try {
-    const text = await callQwenChat(prompt);
-    const data = extractJson(text) || {};
-    const meals = Array.isArray(data.meals) ? data.meals : [];
-    const defaultTypes = ['breakfast', 'lunch', 'snack', 'dinner'];
-    return meals.map((meal: any, index: number) => {
-      const rawType = typeof meal?.mealType === 'string' ? meal.mealType : '';
-      const lowered = rawType.toLowerCase();
-      const normalized =
-        ['breakfast', '早餐', '早饭', '早飯'].includes(rawType) || lowered === 'breakfast'
-          ? 'breakfast'
-          : ['lunch', '午餐', '午饭', '午飯'].includes(rawType) || lowered === 'lunch'
-          ? 'lunch'
-          : ['snack', '加餐', '点心', '點心'].includes(rawType) || lowered === 'snack'
-          ? 'snack'
-          : ['dinner', '晚餐', '晚饭', '晚飯'].includes(rawType) || lowered === 'dinner'
-          ? 'dinner'
-          : defaultTypes[index] || 'breakfast';
-      return {
-        ...meal,
-        mealType: normalized,
-        dishName: typeof meal?.dishName === 'string' ? meal.dishName : '',
-        ingredients: Array.isArray(meal?.ingredients) ? meal.ingredients : []
-      };
-    });
+    const data = JSON.parse(response.text || '{}');
+    return data.meals || [];
   } catch (e) {
-    console.error("Failed to generate meal plan", e);
+    console.error("Failed to parse meal plan JSON", e);
     return [];
   }
 }
@@ -163,44 +122,51 @@ Requirements:
 - Meals must be healthy, low in sodium and sugar, soft enough for a ${ageStr} toddler, and nutritionally balanced.
 - Provide a dish name and a list of main ingredients.
 - The response MUST be a valid JSON object matching the requested schema.
-- The response MUST include "mealType" and it MUST equal "${mealType}".
 - ${langInstruction}
   `;
 
+  const response = await getAI().models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          mealType: { type: Type.STRING },
+          dishName: { type: Type.STRING },
+          ingredients: { type: Type.ARRAY, items: { type: Type.STRING } }
+        },
+        required: ["mealType", "dishName", "ingredients"]
+      }
+    }
+  });
+
   try {
-    const text = await callQwenChat(prompt);
-    return extractJson(text);
+    return JSON.parse(response.text || '{}');
   } catch (e) {
-    console.error("Failed to generate single meal", e);
+    console.error("Failed to parse single meal JSON", e);
     return null;
   }
 }
 
 export async function generateAudio(text: string, language: 'zh' | 'en') {
   try {
-    const response = await fetch(DASHSCOPE_TTS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getApiKey()}`,
-      },
-      body: JSON.stringify({
-        model: QWEN_TTS_MODEL,
-        input: {
-          text,
-          voice: "Cherry",
-          language_type: language === "zh" ? "Chinese" : "English",
+    const voiceName = language === 'zh' ? 'Aoede' : 'Kore';
+    const response = await getAI().models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: ["AUDIO"],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName },
+          },
         },
-      }),
+      },
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`DashScope TTS error ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-    return data?.output?.audio?.url || null;
+    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   } catch (e) {
     console.error("Failed to generate audio", e);
     return null;
@@ -225,12 +191,12 @@ Requirements:
 - ${langInstruction}
   `;
 
-  try {
-    return await callQwenChat(prompt);
-  } catch (e) {
-    console.error("Failed to generate tutorial", e);
-    return '';
-  }
+  const response = await getAI().models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt
+  });
+
+  return response.text || '';
 }
 
 export async function generateReport(timeframe: 'daily' | 'weekly', history: any[], language: 'zh' | 'en') {
@@ -249,10 +215,10 @@ Format as Markdown.
 - ${langInstruction}
   `;
 
-  try {
-    return await callQwenChat(prompt);
-  } catch (e) {
-    console.error("Failed to generate report", e);
-    return '';
-  }
+  const response = await getAI().models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt
+  });
+
+  return response.text || '';
 }

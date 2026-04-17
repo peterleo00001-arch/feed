@@ -8,10 +8,7 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.DASHSCOPE_API_KEY': JSON.stringify(env.DASHSCOPE_API_KEY),
-      'process.env.DASHSCOPE_BASE_URL': JSON.stringify(env.DASHSCOPE_BASE_URL),
-      'process.env.DASHSCOPE_TTS_URL': JSON.stringify(env.DASHSCOPE_TTS_URL),
-      'process.env.QWEN_MODEL': JSON.stringify(env.QWEN_MODEL),
+      'process.env.GEMINI_API_KEY': 'process.env.GEMINI_API_KEY'
     },
     resolve: {
       alias: {
